@@ -33,42 +33,22 @@ function addMessageToChat(role, content) {
     chatHistory.push({ role, content });
 }
 
-// Загрузка API-ключа с сервера с повторными попытками
-async function loadApiKey(retries = 3, delay = 1000) {
-    addLog('Попытка загрузки API-ключа с сервера (порт 3001)...');
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch('http://localhost:3001/get-api-key', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-            }
-            const data = await response.json();
-            if (!data.apiKey) {
-                throw new Error('API-ключ не найден в ответе сервера.');
-            }
-            API_KEY = data.apiKey;
-            addLog('API-ключ успешно загружен.');
-            return true;
-        } catch (error) {
-            addLog(`Ошибка загрузки API-ключа (попытка ${i + 1}/${retries}): ${error.message}`);
-            if (i < retries - 1) {
-                addLog(`Повторная попытка через ${delay} мс...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
+// Загрузка API-ключа из конфигурации
+function loadApiKey() {
+    if (window.API_KEY) {
+        API_KEY = window.API_KEY;
+        addLog('API-ключ загружен из конфигурации.');
+        return true;
     }
-    errorDiv.textContent = 'Не удалось загрузить API-ключ. Проверьте сервер (порт 3001) и повторите позже.';
-    addLog('Не удалось загрузить API-ключ после всех попыток.');
+    errorDiv.textContent = 'API-ключ не найден в конфигурации.';
+    addLog('Ошибка: API-ключ не найден в конфигурации.');
     return false;
 }
 
 // Инициализация
-loadApiKey();
+document.addEventListener('DOMContentLoaded', () => {
+    loadApiKey();
+});
 
 async function getResponse() {
     const userInput = document.getElementById('userInput').value.trim();
